@@ -1,0 +1,292 @@
+---
+title: "QuanGenomicsHW3"
+author: "Noelle Wheeler"
+date: "2023-03-03"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+### Question 1a
+If you reject a null hypothesis this does not mean your null hypothesis is definitely wrong.
+This is because we are only looking at one sample. According to the definition of our alpha
+cutoff (let α = .05). Then we have a 5% chance of incorrectly rejecting the null hypothesis.
+This means if we reject the null hypothesis under then we are probably correct but there is
+a .05 probability that we are wrong.\\
+If you reject the null hypothesis you cannot interpret this result as evidence the null hy-
+pothesis is correct because, again, our sample does not give us all the information about our
+distribution. It is easier to disprove something than prove it, so this is all we can do with out
+limited information from our sample
+
+### Question 1b
+We can set the Type I error because this is our alpha threshold value that we choose. We
+cannot control power because it depends on our actual parameter values such as our sample
+size and how we define our statistic.
+
+### Question a
+Assume that the true value of the parameter p = 0.2 (i.e., an unfair coin). Write code that produces 100 distinct i.i.d samples of the random variable X each with n = 10 experimental trials. Then for each sample, calculate the Maximum Likelihood Estimator, and using the function ‘hist()’ plot a histogram of these 100 estimator values.
+
+```{r}
+# produces sample with n = 10 experimental trails and p = .2
+y <- rbinom(10, 1, .2)
+# calculate mle
+mle <- c(sum(y / 10))
+# repeat 99 more times to get 100 samples 
+for (i in 1:99) {
+  x <- rbinom(10, 1, .2)
+  y <- rbind(y, x)
+  mle <- append( mle, (sum(y[i + 1,]) / 10))
+}
+# plot 100 estimator values
+# set x-tick marks
+interval <- seq(min(mle), max(mle) + .1, by=.1)
+hist(mle, interval, right=FALSE)
+```
+
+### Question b
+Repeat the exercise in part [a] but assume that p = 0.5
+```{r}
+# produces sample with n = 10 experimental trails and p = .5
+y <- rbinom(10, 1, .5)
+# calculate mle
+mle <- c(sum(y / 10))
+# repeat 99 more times to get 100 samples 
+for (i in 1:99) {
+  x <- rbinom(10, 1, .5)
+  y <- rbind(y, x)
+  mle <- append( mle, (sum(y[i + 1,]) / 10))
+}
+# plot 100 estimator values
+# set x-tick marks
+interval <- seq(min(mle), max(mle) + .1, by=.1)
+hist(mle, interval, right=FALSE)
+```
+
+Repeat the exercise in part [a] but assume that p = 0.5 and n = 100
+```{r}
+# produces sample with n = 100 experimental trails and p = .5
+y <- rbinom(100, 1, .5)
+# calculate mle
+mle <- c(sum(y / 10))
+# repeat 99 more times to get 100 samples 
+for (i in 1:99) {
+  x <- rbinom(100, 1, .5)
+  y <- rbind(y, x)
+  mle <- append( mle, (sum(y[i + 1,]) / 10))
+}
+# plot 100 estimator values
+# set x-tick marks
+interval <- seq(min(mle), max(mle) + .1, by=.1)
+hist(mle, interval, right=FALSE)
+```
+
+### Question b
+Repeat question a but with the normal distribution where mu = 0 and variance = 1. Add mle estimate of variance. 
+```{r}
+# produces sample with n = 10 experimental trails and normal dist
+y <- rnorm(10)
+len <- length(y)
+# calculate mle estimates for mu and var
+mle_mu <- c(sum(y / 10))
+# multiply variance by len-1/len so variance has denominator n
+mle_var <- c(var(y) * ((len-1)/len))
+# repeat 99 more times to get 100 samples 
+for (i in 1:99) {
+  x <- rnorm(10)
+  y <- rbind(y, x)
+  mle_mu <- append(mle_mu, (sum(y[i + 1,]) / 10))
+  mle_var <- append(mle_var, (var(y[i + 1,]) * ((len-1)/len)))
+}
+# plot 100 mu estimator values
+# set x-tick marks
+interval <- seq(min(mle_mu), max(mle_mu) + .1, by=.1)
+hist(mle_mu, interval, right=FALSE)
+# plot 100 var estimator values 
+interval <- seq(min(mle_var), max(mle_var) + .1, by=.1)
+hist(mle_var, interval, right=FALSE)
+```
+
+### Question d
+Repeat the exercise in part c but assume that mu = 1 and variance = 2.
+```{r}
+# produces sample with n = 10 experimental trails and normal dist
+y <- rnorm(10, mean = 1, sd = 2)
+len <- length(y)
+# calculate mle estimates for mu and var
+mle_mu <- c(sum(y / 10))
+# multiply variance by len-1/len so variance has denominator n
+mle_var <- c(var(y) * ((len-1)/len))
+# repeat 99 more times to get 100 samples 
+for (i in 1:99) {
+  x <- rnorm(10, mean = 1, sd = 2)
+  y <- rbind(y, x)
+  mle_mu <- append(mle_mu, (sum(y[i + 1,]) / 10))
+  mle_var <- append(mle_var, (var(y[i + 1,]) * ((len-1)/len)))
+}
+# plot 100 mu estimator values
+# set x-tick marks
+hist(mle_mu, breaks = 15)
+# plot 100 var estimator values 
+hist(mle_var, breaks = 15)
+```
+
+Repeat the exercise in part c but assume that mu = 1 and variance = 2 and n =100.
+```{r}
+# produces sample with n = 10 experimental trails and normal dist
+y <- rnorm(100, mean = 1, sd = 2)
+len <- length(y)
+# calculate mle estimates for mu and var
+mle_mu <- c(sum(y / 10))
+# multiply variance by len-1/len so variance has denominator n
+mle_var <- c(var(y) * ((len-1)/len))
+# repeat 99 more times to get 100 samples 
+for (i in 1:99) {
+  x <- rnorm(100, mean = 1, sd = 2)
+  y <- rbind(y, x)
+  mle_mu <- append(mle_mu, (sum(y[i + 1,]) / 10))
+  mle_var <- append(mle_var, (var(y[i + 1,]) * ((len-1)/len)))
+}
+# plot 100 mu estimator values
+# set x-tick marks
+hist(mle_mu, breaks = 15)
+# plot 100 var estimator values 
+hist(mle_var, breaks = 15)
+```
+
+### Question e
+Calculate the unbiased estimator of variance.
+mu = 1, var = 2, n = 10, unbiased variance
+```{r}
+# produces sample with n = 10 experimental trails and normal dist
+y <- rnorm(10, mean = 1, sd = 2)
+len <- length(y)
+# calculate mle estimates for mu and var
+mle_mu <- c(sum(y / 10))
+# calculate unbiased variance
+mle_var <- c(var(y))
+# repeat 99 more times to get 100 samples 
+for (i in 1:99) {
+  x <- rnorm(10, mean = 1, sd = 2)
+  y <- rbind(y, x)
+  mle_mu <- append(mle_mu, (sum(y[i + 1,]) / 10))
+  mle_var <- append(mle_var, (var(y[i + 1,])))
+}
+# plot 100 mu estimator values
+# set x-tick marks
+hist(mle_mu, breaks = 15)
+# plot 100 var estimator values 
+hist(mle_var, breaks = 15)
+```
+mu = 1, var = 2, n = 100, unbiased variance
+```{r}
+# produces sample with n = 10 experimental trails and normal dist
+y <- rnorm(100, mean = 1, sd = 2)
+len <- length(y)
+# calculate mle estimates for mu and var
+mle_mu <- c(sum(y / 10))
+# calculate unbiased variance
+mle_var <- c(var(y))
+# repeat 99 more times to get 100 samples 
+for (i in 1:99) {
+  x <- rnorm(100, mean = 1, sd = 2)
+  y <- rbind(y, x)
+  mle_mu <- append(mle_mu, (sum(y[i + 1,]) / 10))
+  mle_var <- append(mle_var, (var(y[i + 1,])))
+}
+# plot 100 mu estimator values
+# set x-tick marks
+hist(mle_mu, breaks = 15)
+# plot 100 var estimator values 
+hist(mle_var, breaks = 15)
+```
+
+### Question f
+What is the critical threshold for this statistic for a Type I error = α = 0.05
+```{r}
+# one tailed distribution
+crit_thres_one <- qnorm(.95, mean = 0, sd = (1/sqrt(20)))
+print(paste0("the critical threshold for one-sided test is ", crit_thres_one))
+# two tailed distribution
+crit_thres_two <- qnorm(.975, mean = 0, sd = (1/sqrt(20)))
+print(paste0("the critical threshold for two-sided test is ", crit_thres_two))
+```
+### Question g
+Simulate k = 1000 samples under the null hypothesis in part [f], calculate the mean for each sample, and plot a histogram of the means.
+```{r}
+means <- c()
+for (i in 1:1000){
+  dist <- rnorm(20, mean = 0, sd = 1)
+  sample_mean <- mean(dist)
+  means <- append(means, sample_mean)
+}
+hist(means)
+```
+
+### Question h
+What is the power of this test for the null hypothesis in part [f] with a Type I error = α = 0.05?
+```{r}
+pow_one <- pnorm(crit_thres_one, mean = .5, sd = (1/sqrt(20)))
+print(paste0("the power for one-sided test with alpha = .05 is ", pow_one))
+pow_two <- pnorm(crit_thres_two, mean = .5, sd = (1/sqrt(20)))
+print(paste0("the power for two-sided test with alpha = .05 is ", pow_two))
+```
+
+### Question i
+Simulate k = 1000 samples under the true distribution (as used in part [h]), calculate the mean for each sample, and plot a histogram of the means.
+```{r}
+means <- c()
+for (i in 1:1000){
+  dist <- rnorm(20, mean = .5, sd = 1)
+  sample_mean <- mean(dist)
+  means <- append(means, sample_mean)
+}
+hist(means)
+```
+### Question j
+Repeat parts [f-i] but consider n = 100.
+```{r}
+# critical threshold for this statistic for a Type I error = α = 0.05
+# one tailed distribution
+crit_thres_one <- qnorm(.95, mean = 0, sd = (1/sqrt(100)))
+print(paste0("the critical threshold for one-sided test is ", crit_thres_one))
+# two tailed distribution
+crit_thres_two <- qnorm(.975, mean = 0, sd = (1/sqrt(100)))
+print(paste0("the critical threshold for two-sided test is ", crit_thres_two))
+# Simulate k = 1000 samples under the null hypothesis
+means <- c()
+for (i in 1:1000){
+  dist <- rnorm(100, mean = 0, sd = 1)
+  sample_mean <- mean(dist)
+  means <- append(means, sample_mean)
+}
+hist(means, main = "Null Hypothesis mu = 0, variance = 1")
+# calculate power
+pow_one <- pnorm(crit_thres_one, mean = .5, sd = (1/sqrt(100)))
+print(paste0("the power for one-sided test with alpha = .05 is ", pow_one))
+pow_two <- pnorm(crit_thres_two, mean = .5, sd = (1/sqrt(100)))
+print(paste0("the power for two-sided test with alpha = .05 is ", pow_two))
+# simulate k = 1000 samples under true distribution
+means_true <- c()
+for (i in 1:1000){
+  dist <- rnorm(20, mean = .5, sd = 1)
+  sample_mean <- mean(dist)
+  means_true <- append(means_true, sample_mean)
+}
+hist(means_true, main = "True Hypothesis mu = .5, variance = 1")
+```
+
+### Question 3
+
+$MLE(\hat{p})$ that we obtain for $X \sim Bin(n, p) = \frac{y}{n}$ where $y = \sum_{i=1}^n X_i$ \
+This is derived from: \
+$L(p|y,N) = \frac{N!}{y!(N-y)!}p^{y}(1-p)^{N-y}$ \
+$lnL(p|y,N) = yln(p) + (N-y)ln(1-p)$\
+$\frac{\partial lnL(p|y,N)}{\partial p} = \frac{y}{p} - \frac{N-y}{1-p} = 0$\
+$\frac{y}{p} = \frac{N-y}{1-p}$\
+$p=\frac{y}{N}$\
+For the Bernoulli distribution we get the same result:\
+$L(p) = \Pi_{i=1}^{n}p^{x_i} (1-p)^{(1-x_i)}$\
+$lnL(p) = \sum_{i=1}^n x_i ln(p)+(1-x_i)ln(1-p)$\
+$lnL(p) = y ln(p)+(N-y)ln(1-p)$\
+$\frac{\partial lnL(p)}{\partial p} = \frac{y}{p}+\frac{y-N}{1-p}$\
+$p= \frac{y}{N}$
