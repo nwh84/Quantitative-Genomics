@@ -9,7 +9,7 @@ output: html_document
 
 Consider the (slightly idealized) genetics behind behind one of Mendel's famous experiments with pea plants (look Mendel up on wikipedia if you are new to genetics), where for two alleles $A_1$ and $A_2$ the phenotype of a pea is guaranteed to be 'yellow' if the genotype is either $A_1A_1$ or $A_1A_2$ and guaranteed to be 'green' if the genotype is $A_2A_2$.  If you were to code a random variable for this system $Y($yellow$) = 1$ and $Y($green$) = 0$ and used a (genetic) linear regression to model this case, what would be the true values of the parameters $\beta_\mu$, $\beta_a$, $\beta_d$, and $\sigma^2_\epsilon$?
 
-For this system we can use the parameters $\beta_\mu = \frac{3}{4}$, $\beta_a = \frac{1}{2}$, and $\beta_d = \frac{1}{4}$. We would get $\sigma^2_\epsilon$ from our actual data points but since this is a perfect system where no points fall outside of the line we can set $\sigma^2_\epsilon = 0$.
+For this system we can use the parameters $\beta_\mu = \frac{3}{4}$, $\beta_a = -\frac{1}{2}$, and $\beta_d = \frac{1}{4}$. We would get $\sigma^2_\epsilon$ from our actual data points but since this is a perfect system where no points fall outside of the line we can set $\sigma^2_\epsilon = 0$.
 
 ### Problem 2
 
