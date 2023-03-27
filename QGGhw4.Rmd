@@ -111,12 +111,30 @@ plot_df <- data.frame(index = 1:length(P_val), pval = P_val)
 ggplot(plot_df, aes(index, -log10(P_val))) + geom_point()
 ```
 
-h. Do you consider the QQ plot to indicate that you have ‘good’ model fit in this case?
+h. Do you consider the QQ plot to indicate that you have ‘good’ model fit in this case?\
 Yes, this appears to have a good model fit since most loci aren't highly correlated with the phenotype. However, there are some loci and some SNPs that do seem to have a larger effect on the phenotype. 
 
 i. Write code that uses a Bonferroni correction to produce an overall study controlled Type I error of 0.05 to assess whether to reject the null hypothesis for each genotype, where your code also outputs the number of each genotype for which you rejected the null (remember: the genotypes are provided in order along the genome!). Report the numbers of all genotypes for which you rejected the null
 ```{r}
-
+p_adj <- p.adjust(P_val, method = "bonferroni")
+num_reject <- sum(p_adj <= .05)
+print(paste0("There are ",num_reject, " genotypes that reject the null hypothesis"))
 ```
 
+j. Assuming the set of genotypes for which you rejected the null hypothesis in part [i] do indeed indicate the positions of causal genotypes in the genome, how many causal genotypes do you think these significant genotypes are indicating overall?  Explain your reasoning using no more than two sentences.
+```{r}
+location_reject <- which(p_adj <= .05)
+print(location_reject)
+```
+I think these genotypes are indicating about 5 casual genotypes. Since many of these genotypes are close in location, it would make sense that one of those is a casual genotype and the others are in linkage disequilibrium with that casusal genotype. There seems to be five distinct genotype clusters. 
 
+### Problem 3
+\begin{equation}
+\hat{\beta_1} = \frac{\mathrm{Cov}(y,x)}{\mathrm{Var}(x)}
+\end{equation}
+\begin{equation}
+MLE(\hat{\beta}) = (\mathbf{x}^{\textrm{T}}\mathbf{x})^{-1} \mathbf{x}^{\mathrm{T}} \mathbf{y}
+\end{equation}
+For the simple regression model with parameters $\beta = [\beta_0, \beta_1]$, show that equation (2) can be re-written such that the element $\beta_1$ of the output vector has the form of equation (1).
+
+Since there is only one single predictor, $\mathbf{x}^{\mathrm{T}} \mathbf{x}$ equals the variance of $X$ and $\mathbf{x}^{\mathrm{T}} \mathbf{y}$ equals the covariance between $\mathbf{x}^{\mathrm{T}}$ and $Y$. This means that $(\mathbf{x}^{\textrm{T}}\mathbf{x})^{-1} \mathbf{x}^{\mathrm{T}} \mathbf{y}$ equals $\mathrm{Cov}(y,x)*\mathrm{Var}(x)^{-1}$, which can be rewritten as $\frac{\mathrm{Cov}(y,x)}{\mathrm{Var}(x)}$. 
