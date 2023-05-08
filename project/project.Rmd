@@ -1,0 +1,300 @@
+---
+title: "Project"
+author: "Noelle Wheeler"
+date: "2023-05-05"
+output: html_document
+---
+
+Apply the steps of a minimum GWAS analysis
+1. make sure you understand the data and are clear on the components of the data
+2. check the phenotype data
+3. check and filter the genotype data
+4. perform a GWAS analysis and diagnostics
+5. present your final analysis and consider other evidence
+
+### Read in dataframes
+```{r}
+#install.packages("tidyr")
+#install.packages("ggplot2")
+library(tidyr)
+library(ggplot2)
+
+# read phenotype data
+df_pheno <- read.table("/Users/noelawheeler/Desktop/quan genomics/Quan-genomics-assignments/project/phenotypes.csv", header = TRUE, row.names = 1, sep = ",")
+head(df_pheno)
+sample_size <- nrow(df_pheno)
+print(paste0("There are ", sample_size, " samples."))
+
+df_tall <- pivot_longer(df_pheno, cols = c("ENSG00000164308.12", "ENSG00000124587.9", "ENSG00000180185.7", "ENSG00000168827.9", "ENSG00000136536.9"), names_to = "gene", values_to = "value")
+
+df_tall <- pivot_longer(df_pheno, cols = colnames(df_pheno), names_to = "gene", values_to = "value")
+
+ggplot(df_tall, aes(value, fill = gene)) + geom_density(alpha = 0.2)
+```
+Surprisingly, all the genes seem to have the same distribution. 
+
+```{r}
+# read genotype data
+df_geno <- read.table("/Users/noelawheeler/Desktop/quan genomics/Quan-genomics-assignments/project/genotypes.csv", header = TRUE, row.names = 1, sep = ",")
+num_SNP <- ncol(df_geno)
+print(paste0("There are ", num_SNP, " SNPs."))
+```
+
+```{r}
+# read other dataframes 
+df_covars <- read.table("/Users/noelawheeler/Desktop/quan genomics/Quan-genomics-assignments/project/covars.csv", header = TRUE, sep = ",")
+
+snp_info <- read.table("/Users/noelawheeler/Desktop/quan genomics/Quan-genomics-assignments/project/snp_info.csv", header = TRUE, sep = ",")
+
+gene_info <- read.table("/Users/noelawheeler/Desktop/quan genomics/Quan-genomics-assignments/project/gene_info.csv", header = TRUE, row.names = 1, sep = ",")
+```
+
+### convert to Xa, Xd matrices
+```{r}
+# xa matrix
+xa_mat <- df_geno - 1
+
+# xd matrix
+convert_xd <- function(x){
+  if (x) {return(1)}
+  else {return(-1)}
+}
+xd_mat <- df_geno == 1
+xd_mat <- apply(xd_mat, c(1,2), convert_xd)
+```
+
+### GWAS without covariates
+```{r}
+# get beta values for each gene phenotype
+library(magrittr)
+library(MASS)
+# calculate beta_mu, beta_a, beta_d
+beta <- function(y, xa_i, xd_i) { # Create X matrix
+  X_mx_i <- cbind(1, xa_i, xd_i)
+  # Compute MLE_beta
+  beta_i <- ginv(t(X_mx_i) %*% X_mx_i) %*% t(X_mx_i) %*% y
+  return(beta_i)
+}
+
+get_beta_vals <- function(y, x_a, x_d){
+  beta_vals <- lapply(c(1:ncol(x_a)),
+                function(i) { beta(as.matrix(y),
+                              x_a[, i], x_d[, i])} )
+  # get b_u, b_a, b_d
+  b_u <- c()
+  b_a <- c()
+  b_d <- c()
+  for (i in seq(1:ncol(x_d))){
+    b_u <- append(b_u, beta_vals[[i]][1])
+    b_a <- append(b_a, beta_vals[[i]][2])
+    b_d <- append(b_d, beta_vals[[i]][3])
+  }
+  return(list(b_u = b_u, b_a = b_a, b_d = b_d))
+}
+# repeat for each phenotype
+beta_val_1 <- get_beta_vals(df_pheno[[1]], xa_mat, xd_mat)
+beta_val_2 <- get_beta_vals(df_pheno[[2]], xa_mat, xd_mat)
+beta_val_3 <- get_beta_vals(df_pheno[[3]], xa_mat, xd_mat)
+beta_val_4 <- get_beta_vals(df_pheno[[4]], xa_mat, xd_mat)
+beta_val_5 <- get_beta_vals(df_pheno[[5]], xa_mat, xd_mat)
+```
+
+Get p-values for each phenotype
+```{r}
+get_p_vals <- function(y, x_a, x_d) { # Create X matrix
+  # Calculate SSM,SSE,MSM,MSE,F-statistic, and p-value
+  X_mx_i <- cbind(1, x_a, x_d)
+  beta_i <- ginv(t(X_mx_i) %*% X_mx_i) %*% t(X_mx_i) %*% y
+  y_hat <- X_mx_i %*% beta_i
+  SSM <- sum((y_hat - mean(y))^2)
+  SSE <- sum((y - y_hat)^2)
+  df_M <- 3 - 1
+  df_E <- sample_size - 3
+  MSM <- SSM / df_M
+  MSE <- SSE / df_E
+  # Get a test statistic for a likelihood ratio test
+  f_stat <- MSM / MSE
+  # Get pvalue
+  pval <- pf(f_stat, df_M, df_E, lower.tail = FALSE)
+  return(pval)
+}
+
+p_val_mat <- c()
+for (j in seq(1:5)){
+  p_val <- lapply(c(1:ncol(xa_mat)),
+  function(i) { get_p_vals(as.matrix(df_pheno[[j]]), xa_mat[, i], xd_mat[,i])} ) %>%   do.call(rbind, .)
+  p_val_mat <- append(p_val_mat, list(p_val))
+}
+```
+
+Make QQ plot for each phenotype
+```{r}
+qq_plot <- function(pvals){
+  observed_pvals = sort(pvals)
+  expected_pvals = qunif(seq(0, 1, length.out = length(observed_pvals) + 2), 
+                         min = 0, max = 1)
+  expected_pvals = expected_pvals[expected_pvals != 0 & expected_pvals != 1]
+  # combine into dataframe
+  p_df = data.frame(observed = -log10(observed_pvals),
+                  expected = -log10(expected_pvals))
+  #plot
+  ggplot(p_df, aes(x = expected, y = observed)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, color = 'red') +
+  labs(x = '-log10 Expected p-val',
+       y = '-log10 Observed p-val',
+       title = 'QQ plot')
+}
+
+for (j in seq(1:5)){
+  print(qq_plot(p_val_mat[[j]]))
+}
+```
+Manhattan plot
+## convert of chromosome location for manhattan plot
+```{r}
+for (j in seq(1:5)){
+  man_plot <- data.frame(index = 1:length(p_val_mat[[j]]), pval = 
+                           p_val_mat[[j]])
+  p<- ggplot(man_plot, aes(index, -log10(p_val_mat[[j]]))) +
+  geom_point(alpha=0.5) + ggtitle("Manhattan Plot") + xlab("SNP") + 
+    ylab(colnames(df_pheno)[j])
+  print(p)
+}
+```
+Bonferroni correction
+```{r}
+for (j in seq(1:5)){
+  # significant SNPs
+  num_significant <- sum(p_val_mat[[j]] <= .05)
+  print(paste0("There are ", num_significant, " significant SNPs for gene ", 
+               colnames(df_pheno)[j]))
+  # significant SNPs after correction
+  p_adj <- p.adjust(p_val_mat[[j]], method = "bonferroni")
+  adj_num_sig <- sum(p_adj <= .05)
+  print(paste0("After bonferroni correction there are ", adj_num_sig, " significant SNPs for gene ", colnames(df_pheno)[j]))
+}
+```
+
+
+### GWAS with covariates
+```{r}
+covars <- df_covars
+covars$Sex <- ifelse(df_covars$Sex == "FEMALE", 1, 0)
+
+encoded_df <- model.matrix(~ Population - 1, data = covars)
+covars$Population <- NULL
+
+encoded_df <- cbind(covars, encoded_df)
+```
+
+Calculate p values
+```{r}
+library(dplyr)
+library(data.table)
+pval_calculator_w_covars <- function(pheno_input, xa_input, xd_input, xz_input){
+  n_samples <- length(xa_input) # calculate your number of samples
+  # x matrix under h1
+  X_mx <- cbind(rep(1,length(xa_input)),xa_input, xd_input, xz_input)
+  # mle of betas
+  X_mx <- as.matrix(X_mx)
+  MLE_beta <- ginv(t(X_mx) %*% X_mx) %*% t(X_mx) %*% pheno_input 
+  # caluculate x and mle under h0
+  x_h0 =  cbind(rep(1,length(xa_input)), xz_input)
+  
+  x_h0 <- as.matrix(x_h0)
+  MLE_h0 = ginv(t(x_h0) %*% x_h0) %*% t(x_h0) %*% pheno_input
+  
+  # calculate y_hat under null and h0 and h1
+  y_hat_0 = x_h0 %*% MLE_h0
+  y_hat_1 = X_mx%*% MLE_beta
+  
+  # calculate sse under h0 and h1
+  SSE_theta_0 = sum((pheno_input-y_hat_0)^2) 
+  SSE_theta_1 = sum((pheno_input-y_hat_1)^2)
+  
+  df_M <- 2
+  df_E <- n_samples - 8
+  
+  # calculate f stat
+  numerator <- (SSE_theta_0-SSE_theta_1) / df_M
+  denom <- SSE_theta_1 / df_E
+  Fstatistic <-numerator / denom
+  
+  # calculate p value
+  pval <- pf(Fstatistic, df_M, df_E,lower.tail = FALSE)
+  return(pval)
+}
+
+  
+# Run the function
+p_val_mat_covar <- c()
+for (j in seq(1:5)){
+  results.2 <- lapply(1:ncol(xa_mat), function(column.counter){
+  data.table(pval_calculator_w_covars(pheno_input = df_pheno[,j],
+                                      xa_input = xa_mat[, column.counter],
+                                      xd_input = xd_mat[, column.counter],
+                                      xz_input = encoded_df[, c(2,3,4,5,6)]))
+              }) %>% rbindlist()
+
+  colnames(results.2) <- colnames(df_pheno)[j]
+  p_val_mat_covar <- append(p_val_mat_covar, list(results.2))
+}
+
+```
+
+Make QQ plot for each phenotype with covariates
+```{r}
+for (j in seq(1:5)){
+  print(qq_plot(as.matrix(p_val_mat_covar[[j]])))
+}
+```
+```{r}
+for (j in seq(1:5)){
+  x <- as.matrix(p_val_mat_covar[[j]])
+  man_plot <- data.frame(index = 1:length(x), pval = x)
+  p<- ggplot(man_plot, aes(index, -log10(x))) +
+  geom_point(alpha=0.5) + ggtitle("Manhattan Plot") + xlab("SNP") + 
+    ylab(colnames(p_val_mat_covar[[j]]))
+  print(p)}
+```
+
+Interestingly when we add the covariates the manhattan plots look the same. 
+
+Bonferroni correction
+```{r}
+for (j in seq(1:5)){
+  # significant SNPs
+  x <- as.matrix(p_val_mat_covar[[j]])
+  num_significant <- sum(x <= .05)
+  print(paste0("There are ", num_significant, " significant SNPs for gene ", 
+               colnames(p_val_mat_covar[[j]])))
+  # significant SNPs after correction
+  p_adj <- p.adjust(x, method = "bonferroni")
+  adj_num_sig <- sum(p_adj <= .05)
+  print(paste0("After bonferroni correction there are ", adj_num_sig, " significant SNPs for gene ", colnames(p_val_mat_covar[[j]])))
+}
+```
+Find location of SNPS
+```{r}
+# find indices of snps
+p_adj1 <- p.adjust(as.matrix(p_val_mat_covar[[1]]), method = "bonferroni")
+snp_gene1 <- which(p_adj1 <= .05)
+p_adj2 <- p.adjust(as.matrix(p_val_mat_covar[[2]]), method = "bonferroni")
+snp_gene2 <- which(p_adj2 <= .05)
+p_adj3 <- p.adjust(as.matrix(p_val_mat_covar[[3]]), method = "bonferroni")
+snp_gene3 <- which(p_adj3 <= .05)
+p_adj4 <- p.adjust(as.matrix(p_val_mat_covar[[4]]), method = "bonferroni")
+snp_gene4 <- which(p_adj4 <= .05)
+p_adj5 <- p.adjust(as.matrix(p_val_mat_covar[[5]]), method = "bonferroni")
+snp_gene5 <- which(p_adj5 <= .05)
+
+# find genomic position of snps
+snp1_location <- snp_info[snp_gene1,]
+snp2_location <- snp_info[snp_gene2,]
+snp3_location <- snp_info[snp_gene3,]
+# ignore gene 4 and 5 since they don't have any significant snps
+```
+We can see that the position of the significant snp for gene 1 is on chromosome 5 around position 96774230. The significant locus for gene 2 is on chromosome 6 around position 42889467. The significant locus for gene 3 is on chromosome 16 around position 1604317 and position 1806559-1929366. 
+
+
