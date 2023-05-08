@@ -368,7 +368,7 @@ to code a random variable for this system <span class="math inline">\(Y(\)</span
 1\)</span> and <span class="math inline">\(Y(\)</span>green<span class="math inline">\() = 0\)</span> and used a (genetic) linear
 regression to model this case, what would be the true values of the
 parameters <span class="math inline">\(\beta_\mu\)</span>, <span class="math inline">\(\beta_a\)</span>, <span class="math inline">\(\beta_d\)</span>, and <span class="math inline">\(\sigma^2_\epsilon\)</span>?</p>
-<p>For this system we can use the parameters <span class="math inline">\(\beta_\mu = \frac{3}{4}\)</span>, <span class="math inline">\(\beta_a = \frac{1}{2}\)</span>, and <span class="math inline">\(\beta_d = \frac{1}{4}\)</span>. We would get <span class="math inline">\(\sigma^2_\epsilon\)</span> from our actual data
+<p>For this system we can use the parameters <span class="math inline">\(\beta_\mu = \frac{3}{4}\)</span>, <span class="math inline">\(\beta_a = -\frac{1}{2}\)</span>, and <span class="math inline">\(\beta_d = \frac{1}{4}\)</span>. We would get <span class="math inline">\(\sigma^2_\epsilon\)</span> from our actual data
 points but since this is a perfect system where no points fall outside
 of the line we can set <span class="math inline">\(\sigma^2_\epsilon =
 0\)</span>.</p>
@@ -395,10 +395,10 @@ outputs the number of genotypes N and sample size n and report these
 number.</li>
 </ol>
 <pre class="r"><code>genotypes &lt;- read.table(&quot;/Users/noelawheeler/Downloads/QG23 - hw4_genotypes.txt&quot;)
-print(paste0(&quot;There are &quot;, nrow(genotypes), &quot; genotypes.&quot;))</code></pre>
-<pre><code>## [1] &quot;There are 400 genotypes.&quot;</code></pre>
-<pre class="r"><code>print(paste0(&quot;The sample size is  &quot;, ncol(genotypes)))</code></pre>
-<pre><code>## [1] &quot;The sample size is  1000&quot;</code></pre>
+print(paste0(&quot;There are &quot;, ncol(genotypes), &quot; genotypes.&quot;))</code></pre>
+<pre><code>## [1] &quot;There are 1000 genotypes.&quot;</code></pre>
+<pre class="r"><code>print(paste0(&quot;The sample size is  &quot;, nrow(genotypes)))</code></pre>
+<pre><code>## [1] &quot;The sample size is  400&quot;</code></pre>
 <ol start="4" style="list-style-type: lower-alpha">
 <li>Write code that converts your genotype data input in part [c] into
 two new matrices, the first a matrix where each genotype is converted to
@@ -505,21 +505,22 @@ null</p></li>
 num_reject &lt;- sum(p_adj &lt;= .05)
 print(paste0(&quot;There are &quot;,num_reject, &quot; genotypes that reject the null hypothesis&quot;))</code></pre>
 <pre><code>## [1] &quot;There are 11 genotypes that reject the null hypothesis&quot;</code></pre>
+<pre class="r"><code>location_reject &lt;- which(p_adj &lt;= .05)
+print(location_reject)</code></pre>
+<pre><code>##  [1] 116 117 132 195 562 873 874 875 876 877 878</code></pre>
 <ol start="10" style="list-style-type: lower-alpha">
 <li>Assuming the set of genotypes for which you rejected the null
 hypothesis in part [i] do indeed indicate the positions of causal
 genotypes in the genome, how many causal genotypes do you think these
 significant genotypes are indicating overall? Explain your reasoning
-using no more than two sentences.</li>
+using no more than two sentences.<br />
+</li>
 </ol>
-<pre class="r"><code>location_reject &lt;- which(p_adj &lt;= .05)
-print(location_reject)</code></pre>
-<pre><code>##  [1] 116 117 132 195 562 873 874 875 876 877 878</code></pre>
 <p>I think these genotypes are indicating about 5 casual genotypes.
 Since many of these genotypes are close in location, it would make sense
 that one of those is a casual genotype and the others are in linkage
 disequilibrium with that casusal genotype. There seems to be five
-distinct genotype clusters.</p>
+distinct genotype location clusters.</p>
 </div>
 <div id="problem-3" class="section level3">
 <h3>Problem 3</h3>
