@@ -31,7 +31,7 @@ df_tall <- pivot_longer(df_pheno, cols = colnames(df_pheno), names_to = "gene", 
 
 ggplot(df_tall, aes(value, fill = gene)) + geom_density(alpha = 0.2)
 ```
-Surprisingly, all the genes seem to have the same distribution. 
+All the genes seem to have the same distribution. This makes sense on simulated data. 
 
 ```{r}
 # read genotype data
@@ -232,11 +232,8 @@ p_val_mat_covar <- c()
 for (j in seq(1:5)){
   results.2 <- lapply(1:ncol(xa_mat), function(column.counter){
   data.table(pval_calculator_w_covars(pheno_input = df_pheno[,j],
-                                      xa_input = xa_mat[, column.counter],
-                                      xd_input = xd_mat[, column.counter],
-                                      xz_input = encoded_df[, c(2,3,4,5,6)]))
-              }) %>% rbindlist()
-
+  xa_input = xa_mat[, column.counter],xd_input = xd_mat[,column.counter], xz_input = encoded_df[, c(2,3,4,5,6)]))}) %>% rbindlist()
+  
   colnames(results.2) <- colnames(df_pheno)[j]
   p_val_mat_covar <- append(p_val_mat_covar, list(results.2))
 }
@@ -259,7 +256,7 @@ for (j in seq(1:5)){
   print(p)}
 ```
 
-Interestingly when we add the covariates the manhattan plots look the same. 
+Interestingly when we add the covariates the manhattan plots look the very similar.
 
 Bonferroni correction
 ```{r}
@@ -295,6 +292,7 @@ snp2_location <- snp_info[snp_gene2,]
 snp3_location <- snp_info[snp_gene3,]
 # ignore gene 4 and 5 since they don't have any significant snps
 ```
-We can see that the position of the significant snp for gene 1 is on chromosome 5 around position 96774230. The significant locus for gene 2 is on chromosome 6 around position 42889467. The significant locus for gene 3 is on chromosome 16 around position 1604317 and position 1806559-1929366. 
+
+We can see that the position of the significant snp for gene 1 (ERAP2) is on chromosome 5 around position 96774230. The significant locus for gene 2 (PEX6) is on chromosome 6 around position 42889467. The significant locus for gene 3 (FAHD1) is on chromosome 16 around position 1604317 and position 1806559-1929366. This makes sense if we look at gene_info.
 
 
